@@ -1,5 +1,3 @@
-"""Need to completely rewrite this"""
-
 import discord
 import aiohttp
 import traceback
