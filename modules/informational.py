@@ -50,28 +50,92 @@ class Informational:
         pingmsg = await ctx.send("Pinging so fast you won't even see this!!")
         await pingmsg.edit(content=f"Ping => {round(self.bot.latency * 1000, 2)} ms")
 
-    @commands.command(aliases=["server", "sinfo", "guildinfo", "ginfo", "guild"])
+    @commands.command(aliases=["server", "sinfo", "guildinfo", "ginfo", "guild", "si", "gi"])
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def serverinfo(self, ctx):
         """Get information on the server."""
+        region = {
+            "us-west": "US West",
+            "us-east": "US East",
+            "us-south": "US South",
+            "us-central": "US Central",
+            "eu-west": "EU West",
+            "eu-central": "EU Central",
+            "singapore": "Singapore",
+            "london": "London",
+            "sydney": "Sydney",
+            "amsterdam": "Amsterdam",
+            "frankfurt": "Frankfurt",
+            "brazil": "Brazil",
+            "hongkong": "Hongkong",
+            "russia": "Russia",
+            "vip-us-east": "[VIP] US East",
+            "vip-us-west": "[VIP] US West",
+            "vip-amsterdam": "[VIP] Amsterdam"
+        }
+
+        verification = {
+            0: "None",
+            1: "1 - Must have a verified email",
+            2: "2 - Must also be registered for more than 5 minutes",
+            3: "3 - Must also be member of the server for more than 10 minutes",
+            4: "4 - Must have a verified phone number"
+        }
+
+        mfa = {
+            0: "Disabled",
+            1: "Enabled"
+        }
+
+        online = 0
+        onlineEmoji = discord.utils.get(ctx.bot.emojis, name="UniOnline")
+
+        idle = 0
+        idleEmoji = discord.utils.get(ctx.bot.emojis, name="UniIdle")
+
+        offline = 0
+        offlineEmoji = discord.utils.get(ctx.bot.emojis, name="UniOffline")
+
+        dnd = 0
+        dndEmoji = discord.utils.get(ctx.bot.emojis, name="UniDND")
+
+        for m in ctx.guild.members:
+            if m.status == discord.Status.online:
+                online = online + 1
+            elif m.status == discord.Status.idle:
+                idle = idle + 1
+            elif m.status == discord.Status.offline:
+                offline = offline + 1
+            elif m.status == discord.Status.dnd:
+                dnd = dnd + 1
+
         embed = discord.Embed(colour=3553599)
         embed.set_author(name=f"{ctx.guild.name} ({ctx.guild.id})", icon_url=ctx.guild.icon_url)
         embed.set_thumbnail(url=ctx.guild.icon_url)
         embed.add_field(
             name="Owner",
-            value=f"{ctx.guild.owner.name}#{ctx.guild.owner.discriminator}"
+            value=f"{ctx.guild.owner.name}#{ctx.guild.owner.discriminator}",
+            inline=False
+        )
+        embed.add_field(
+            name="Verification",
+            value=verification[int(ctx.guild.verification_level)],
+            inline=False
         )
         embed.add_field(
             name="Region",
-            value=ctx.guild.region
+            value=region[str(ctx.guild.region)],
+            inline=True
         )
         embed.add_field(
-            name="Member Count",
-            value=ctx.guild.member_count
+            name="Two-Factor Authentication",
+            value=mfa[int(ctx.guild.mfa_level)],
+            inline=True
         )
         embed.add_field(
-            name="Channels",
-            value=f"{len(ctx.guild.text_channels)} Text Channels\n{len(ctx.guild.voice_channels)} Voice Channels"
+            name=f"{len(ctx.guild.channels)} Channels",
+            value=f"{len(ctx.guild.text_channels)} Text Channels\n{len(ctx.guild.voice_channels)} Voice Channels",
+            inline=False
         )
         embed.add_field(
             name=f"{len(ctx.guild.roles) - 1} Roles",
@@ -80,13 +144,27 @@ class Informational:
         )
         embed.add_field(
             name=f"{len(ctx.guild.emojis)} Emojis",
-            value=" | ".join([str(x) for x in ctx.guild.emojis]),
+            value=" ".join([str(x) for x in ctx.guild.emojis]),
             inline=False
+        )
+        embed.add_field(
+            name=f"{ctx.guild.member_count} Members",
+            value=f"{len([m for m in ctx.guild.members if not m.bot])} Humans\n"
+            f"{len([m for m in ctx.guild.members if m.bot])} Bots",
+            inline=True
+        )
+        embed.add_field(
+            name="Member Status\'",
+            value=f"{onlineEmoji} {online}\n"
+            f"{idleEmoji} {idle}\n"
+            f"{dndEmoji} {dnd}\n"
+            f"{offlineEmoji} {offline}",
+            inline=True
         )
 
         await ctx.send(embed=embed)
 
-    @commands.command(aliases=["uinfo", "user"])
+    @commands.command(aliases=["uinfo", "user", "ui"])
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def userinfo(self, ctx, user: discord.Member=None):
         """Shows information on a user or yourself."""
@@ -122,7 +200,7 @@ class Informational:
             else:
                 roles = "No Roles"
             embed.add_field(
-                name=f"({len(user.roles[1:])}) Roles",
+                name=f"{len(user.roles[1:])} Roles",
                 value=roles,
                 inline=False
             )
@@ -148,13 +226,14 @@ class Informational:
     async def invite(self, ctx):
         """Sends the bot's invite and an invite to the support server."""
         if ctx.guild.id == 472302438490046494:
-            return await ctx.send(f"<https://discordapp.com/oauth2/authorize?client_id={self.bot.id}&scope=bot&permissions=0>\n"
+            return await ctx.send(f"<https://discordapp.com/oauth2/authorize?client_id={self.bot.user.id}&scope=bot&permissions=0>\n"
                                   f"\nHere is my invite, make sure to give it the right permissions for what you need to use it for "
                                   f"or else it may not work properly. :heart:")
-        return await ctx.send(f"<https://discordapp.com/oauth2/authorize?client_id={self.bot.id}&scope=bot&permissions=0>\n"
-                              f"\nHere is my invite, make sure to give it the right permissions or else it may not work properly. "
-                              f":heart:\nAlso here's the support server if you have any questions or suggestions: "
-                              f"https://discord.gg/mqzcMca")
+        else:
+            return await ctx.send(f"<https://discordapp.com/oauth2/authorize?client_id={self.bot.user.id}&scope=bot&permissions=0>\n"
+                                  f"\nHere is my invite, make sure to give it the right permissions or else it may not work properly. "
+                                  f":heart:\nAlso here's the support server if you have any questions or suggestions: "
+                                  f"https://discord.gg/mqzcMca")
 
     @commands.command()
     @commands.cooldown(1, 5, commands.BucketType.user)
