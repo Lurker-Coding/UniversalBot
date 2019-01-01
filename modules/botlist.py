@@ -25,7 +25,7 @@ class BotList:
             # I'm commenting this out then deleting it if they do shut down
 
             # try:
-            #     url = f"https://discordbotlabs.com/api/" # discordbotlabs.com doesn't have its api finished yet
+            #     url = f"https://discordbotlabs.com/api/" # discordbotlabs.com does not have its api finished yet
             #     payload = {
             #         "shard_id": self.bot.shard_count,
             #         "guilds": int(self.guildcount)
@@ -202,8 +202,8 @@ class BotList:
 
             await asyncio.sleep(43200)
 
-    async def on_ready(self):
-        await self.updatebotlists()
+    # async def on_ready(self):
+    #     await self.updatebotlists()
 
 
 def setup(bot):

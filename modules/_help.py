@@ -38,6 +38,15 @@ class Help:
                 pass
 
             try:
+                embed.add_field(
+                    name="Image",
+                    value=", ".join([f"`{i.name}`" for i in self.bot.commands if i.cog_name == "Image" and not i.hidden]),
+                    inline=False
+                )
+            except:
+                pass
+
+            try:
                 if ctx.author.id == 227110473466773504:
                     embed.add_field(
                         name="Developer",

@@ -92,6 +92,70 @@ class UniversalBot(commands.AutoShardedBot):
             for page in pages:
                 await ctx.send(page)
 
+    async def __level_handler(self, message):
+        if not isinstance(message.channel, discord.TextChannel):
+            return
+        if message.content == "" or not len(message.content) > 5:
+            return
+
+        if random.randint(1, 10) == 1:
+            author = message.author
+            user_data = await r.table("levelSystem").get(str(author.id)).run(self.r_conn)
+            if not user_data:
+                data = {
+                    "id": str(author.id),
+                    "xp": 0,
+                    "lastxp": "0",
+                    "blacklisted": False,
+                    "lastxptimes": []
+                }
+
+                return await r.table("levelSystem").insert(data).run(self.r_conn)
+
+            if user_data.get("blacklisted", False):
+                return
+
+            if (int(time.time()) - int(user_data["lastxp"])) >= 120:
+                lastxptimes = user_data["lastxptimes"]
+                lastxptimes.append(str(int(time.time())))
+
+                xp = user_data["xp"] + random.randint(10, 40)
+                data = {
+                    "xp": xp,
+                    "lastxp": str(int(time.time())),
+                    "lastxptimes": lastxptimes
+                }
+
+                await r.table("levelSystem").get(str(author.id)).update(data).run(self.r_conn)
+
+        if random.randint(1, 10) == 1:
+            author = message.author
+            guildXP = await r.table("guildXP").get(str(author.id)).run(self.r_conn)
+
+            if not guildXP or not guildXP.get(str(message.author.id)):
+                data = {
+                    str(message.author.id): {
+                        "lastxp": str(int(time.time())),
+                        "xp": 0
+                    }
+                }
+
+                if not guildXP:
+                    data["id"] = str(message.guild.id)
+
+                return await r.table("guildXP").get(str(message.guild.id)).update(data).run(self.r_conn)
+
+            if (int(time.time()) - int(guildXP.get(str(message.author.id))["lastxp"])) >= 120:
+                xp = guildXP.get(str(message.author.id))["xp"] + random.randint(10, 40)
+                data = {
+                    str(message.author.id): {
+                        "xp": xp,
+                        "lastxp": str(int(time.time()))
+                    }
+                }
+
+                await r.table("guildXP").get(str(message.guild.id)).update(data).run(self.r_conn)
+
     async def on_message(self, message):
         self.counter["messages_read"] += 1
 
@@ -99,9 +163,11 @@ class UniversalBot(commands.AutoShardedBot):
             return
 
         await self.process_commands(message)
+        await self.__level_handler(message)
 
     async def close(self):
         self.r_conn.close()
+        # self.redis.close()
         await super().close()
 
     async def on_shard_ready(self, shard_id):
@@ -117,7 +183,7 @@ class UniversalBot(commands.AutoShardedBot):
         print(f"Users: {len(set(self.get_all_members()))}")
         await self.change_presence(
             status=discord.Status.online,
-            activity=discord.Game(f"{prefixes[0]}help | {len(self.guilds)} guilds")
+            activity=discord.Game(f"{prefixes[0]}help | {self.shard_count} Shards")
         )
 
     def bot_uptime(self, *, brief=False):

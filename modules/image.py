@@ -4,7 +4,7 @@ import aiohttp
 from discord.ext import commands
 
 
-class ImageC:
+class Image:
     def __init__(self, bot):
         self.bot = bot
 
@@ -119,5 +119,5 @@ class ImageC:
 
 def setup(bot):
     bot.add_cog(
-        ImageC(bot)
+        Image(bot)
     )

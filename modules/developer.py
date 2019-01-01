@@ -78,9 +78,9 @@ class Developer:
         """Return the vps' speedtest results"""
         await ctx.trigger_typing()
 
-        data = subprocess.getoutput("speedtest --share -- simple")
+        data = subprocess.getoutput("speedtest --share --simple")
         data = re.search("(?P<url>https?://[^\s]+)", str(data)).group("url")
-        embed = discord.Embed()
+        embed = discord.Embed(colour=3553599)
         embed.set_image(url=data)
 
         await ctx.send(embed=embed)
@@ -90,6 +90,7 @@ class Developer:
     async def _eval(self, ctx, *, code: str):
         """Evaluate Python Code."""
         env = {
+            'self': self,
             'bot': self.bot,
             'ctx': ctx,
             'channel': ctx.channel,
@@ -97,7 +98,8 @@ class Developer:
             'guild': ctx.guild,
             'message': ctx.message,
             '_': self._last_result,
-            'r': r
+            'r': r,
+            'r_conn': self.bot.r_conn
         }
 
         env.update(globals())
@@ -157,7 +159,7 @@ class Developer:
         """Forces a user to run the specified command."""
         message = ctx.message
         message.author = user
-        message.content = f"{prefixes[0]}{' '.join(command)}"
+        message.content = f"{prefixes[0]}{''.join(command)}"
 
         await self.bot.process_commands(message)
         await ctx.message.add_reaction(u"\U0001F44C")
