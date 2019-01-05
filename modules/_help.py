@@ -18,16 +18,20 @@ class Help:
 
             if entity is None:
                 clean = command.replace('@', '@\u200b')
+
                 return await ctx.send(f"Command or category \"{clean}\" not found.")
             elif isinstance(entity, commands.Command):
                 p = await HelpPaginator.from_command(ctx, entity)
             else:
                 p = await HelpPaginator.from_cog(ctx, entity)
+
             return await p.paginate()
+
         try:
             embed = discord.Embed(colour=3553599)
             embed.set_author(name=f"{self.bot.user.name} Commands!", icon_url=self.bot.user.avatar_url)
             embed.set_footer(text=f"{len(self.bot.commands)} Total Commands")
+
             try:
                 embed.add_field(
                     name="Informational",
@@ -41,6 +45,15 @@ class Help:
                 embed.add_field(
                     name="Image",
                     value=", ".join([f"`{i.name}`" for i in self.bot.commands if i.cog_name == "Image" and not i.hidden]),
+                    inline=False
+                )
+            except:
+                pass
+
+            try:
+                embed.add_field(
+                    name="Economy",
+                    value=", ".join([f"`{i.name}`" for i in self.bot.commands if i.cog_name == "Economy" and not i.hidden]),
                     inline=False
                 )
             except:
