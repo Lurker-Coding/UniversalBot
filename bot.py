@@ -100,36 +100,7 @@ class UniversalBot(commands.AutoShardedBot):
 
         if random.randint(1, 10) == 1:
             author = message.author
-            user_data = await r.table("levelSystem").get(str(author.id)).run(self.r_conn)
-            if not user_data:
-                data = {
-                    "id": str(author.id),
-                    "xp": 0,
-                    "lastxp": "0",
-                    "blacklisted": False,
-                    "lastxptimes": []
-                }
-
-                return await r.table("levelSystem").insert(data).run(self.r_conn)
-
-            if user_data.get("blacklisted", False):
-                return
-
-            if (int(time.time()) - int(user_data["lastxp"])) >= 120:
-                lastxptimes = user_data["lastxptimes"]
-                lastxptimes.append(str(int(time.time())))
-
-                xp = user_data["xp"] + random.randint(10, 40)
-                data = {
-                    "xp": xp,
-                    "lastxp": str(int(time.time())),
-                    "lastxptimes": lastxptimes
-                }
-
-                await r.table("levelSystem").get(str(author.id)).update(data).run(self.r_conn)
-
-        if random.randint(1, 10) == 1:
-            author = message.author
+            level_system = await r.table("levelSystem").get(str(author.id)).run(self.r_conn)
             guildXP = await r.table("guildXP").get(str(author.id)).run(self.r_conn)
 
             if not guildXP or not guildXP.get(str(message.author.id)):
@@ -155,6 +126,33 @@ class UniversalBot(commands.AutoShardedBot):
                 }
 
                 await r.table("guildXP").get(str(message.guild.id)).update(data).run(self.r_conn)
+
+            if not level_system:
+                data = {
+                    "id": str(author.id),
+                    "xp": 0,
+                    "lastxp": "0",
+                    "blacklisted": False,
+                    "lastxptimes": []
+                }
+
+                return await r.table("levelSystem").insert(data).run(self.r_conn)
+
+            if level_system.get("blacklisted", False):
+                return
+
+            if (int(time.time()) - int(level_system["lastxp"])) >= 120:
+                lastxptimes = level_system["lastxptimes"]
+                lastxptimes.append(str(int(time.time())))
+
+                xp = level_system["xp"] + random.randint(10, 40)
+                data = {
+                    "xp": xp,
+                    "lastxp": str(int(time.time())),
+                    "lastxptimes": lastxptimes
+                }
+
+                await r.table("levelSystem").get(str(author.id)).update(data).run(self.r_conn)
 
     async def on_message(self, message):
         self.counter["messages_read"] += 1

@@ -1,8 +1,11 @@
 import discord
-import rethinkdb as r
 import math
+import datetime
+import time
+import rethinkdb as r
 
 from discord.ext import commands
+from config import prefixes
 
 
 class Economy:
@@ -93,7 +96,7 @@ class Economy:
     @commands.command(aliases=["bal", "money", "$"])
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def balance(self, ctx, user:discord.Member=None):
-        """Shows yours or another users balance"""
+        """Shows yours or another users balance."""
         if not user:
             user = ctx.author
 
@@ -105,6 +108,37 @@ class Economy:
             await ctx.send(f"Balance: **${balance}**")
         else:
             await ctx.send("Balance: **$0**")
+
+    @commands.command()
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def daily(self, ctx):
+        """Grab yourself some free money."""
+        user = ctx.author
+        await self.__check_level_account(user.id)
+
+        if not await self.__has_account(user.id):
+            return await ctx.send(f"You do not have an account made. Please make one with `{prefixes[0]}register`.")
+
+        user_data = await r.table("economy").get(str(user.id)).run(self.bot.r_conn)
+        last_payday = user_data["lastpayday"]
+        user_balance = int(user_data["balance"])
+
+        if await self.__is_frozen(user.id):
+            return await ctx.send(":x: This account is frozen.")
+
+        tn = int(time.time())
+        st = int(last_payday)
+        tl = tn - st
+
+        if not tl >= 86400:
+            i = datetime.timedelta(seconds=86400 - tl)
+            d = datetime.datetime(1, 1, 1) + i
+            return await ctx.send(f":x: You have **{d.strftime('%H:%M:&S')} until your next daily.**")
+
+        # change this so it changes amount if user has donated (at some point)
+        await ctx.send("You have received **$500**!")
+        await self.__update_payday_time(user.id)
+        await self.__update_balance(user.id, user_balance + 500)
 
 
 def setup(bot):
