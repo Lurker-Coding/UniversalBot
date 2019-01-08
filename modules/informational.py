@@ -20,6 +20,13 @@ class Informational:
 
         return '{:.0f}{}'.format(n / 10 ** (3 * millidx), millnames[millidx])
 
+    def delta(self, time):
+        delta = time.days
+        years, remainder = divmod(int(delta), 365)
+        months, days = divmod(int(remainder), 30.4167)
+
+        return f"{int(years)} years, {int(months)} months, {int(days)} days"
+
     @commands.command()
     @commands.cooldown(1, 14400, commands.BucketType.guild)
     async def contact(self, ctx, *message):
@@ -170,49 +177,74 @@ class Informational:
         """Shows information on a user or yourself."""
         if user is None:
             user = ctx.author
+
         try:
-            playinggame = user.activity.title
+            playing = user.activity.name
         except:
-            playinggame = "Not Playing Anything"
+            playing = "None"
+
+        Status = {
+            "online": "Online",
+            "idle": "Idle",
+            "dnd": "Do Not Disturb",
+            "offline": "Offline/Invisible"
+        }
+
+        if user.roles[1:]:
+            roles = ", ".join(sorted([x.name for x in user.roles][1:], key=[x.name for x in ctx.guild.roles[::-1][:-1]].index))
+        else:
+            roles = "No Roles"
 
         embed = discord.Embed(colour=3553599)
         embed.set_author(name=f"{user} ({user.id})", icon_url=user.avatar_url)
         embed.set_thumbnail(url=user.avatar_url)
         embed.add_field(
+            name="Nickname",
+            value=user.nick if user.nick else "None",
+            inline=True
+        )
+        embed.add_field(
             name="Is Bot?",
-            value=str(user.bot)
+            value=str(user.bot),
+            inline=True
         )
         embed.add_field(
-            name=f"Playing ({user.status})",
-            value=playinggame
+            name="Status",
+            value=Status[str(user.status)],
+            inline=True
         )
         embed.add_field(
-            name="Account Created",
-            value=user.created_at.strftime("%b %d %Y %H:%M")
+            name="Playing",
+            value=playing,
+            inline=True
         )
         embed.add_field(
-            name="Joined Server",
-            value=user.joined_at.strftime("%b %d %Y %H:%M")
+            name="Mutual Servers",
+            value=str(len(list(filter(lambda u: u.id == user.id, self.bot.get_all_members())))),
+            inline=True
         )
-        try:
-            if user.roles[1:]:
-                roles = ", ".join(sorted([x.name for x in user.roles][1:], key=[x.name for x in ctx.guild.role_hierarchy][1:].index))
-            else:
-                roles = "No Roles"
-            embed.add_field(
-                name=f"{len(user.roles[1:])} Roles",
-                value=roles,
-                inline=False
-            )
-        except:
-            pass
+        embed.add_field(
+            name="Joined at",
+            value=f"{user.joined_at.strftime('%-I:%M %p %d/%m/%Y')}\n{self.delta(datetime.utcnow() - user.joined_at)} ago",
+            inline=False
+        )
+        embed.add_field(
+            name="Created at",
+            value=f"{user.created_at.strftime('%-I:%M %p %d/%m/%Y')}\n{self.delta(datetime.utcnow() - user.created_at)} ago",
+            inline=False
+        )
+        embed.add_field(
+            name=f"{len(user.roles[1:])} Roles",
+            value=roles,
+            inline=False
+        )
 
         await ctx.send(embed=embed)
 
     @commands.command()
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def avatar(self, ctx, user: discord.Member=None):
-        """"Sends avatar of the user mentioned or you."""
+        """Sends avatar of the user mentioned or you."""
         if user is None:
             user = ctx.author
         if user.avatar_url is None:

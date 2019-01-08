@@ -21,7 +21,7 @@ class UniversalBot(commands.AutoShardedBot):
     def __init__(self):
         super().__init__(
             command_prefix=_prefixes,
-            description="Bot I plan to keep adding features to.",
+            description="bad bot",
             status=discord.Status.dnd,
             activity=discord.Game(name="Starting up..."),
             pm_help=False,
@@ -184,21 +184,16 @@ class UniversalBot(commands.AutoShardedBot):
             activity=discord.Game(f"{prefixes[0]}help | {self.shard_count} Shards")
         )
 
-    def bot_uptime(self, *, brief=False):
+    def bot_uptime(self):
         now = datetime.utcnow()
         delta = now - self.uptime
         hours, remainder = divmod(int(delta.total_seconds()), 3600)
         minutes, seconds = divmod(remainder, 60)
         days, hours = divmod(hours, 24)
+        fmt = "{h} hours, {m} minutes, and {s} seconds"
 
-        if not brief:
-            fmt = "{h} hours, {m} minutes, and {s} seconds"
-            if days:
-                fmt = "{d} days, " + fmt
-        else:
-            fmt = "{h}h {m}m {s}s"
-            if days:
-                fmt = "{d}d " + fmt
+        if days:
+            fmt = "{d} days, " + fmt
 
         return fmt.format(d=days, h=hours, m=minutes, s=seconds)
 
