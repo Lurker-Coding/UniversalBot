@@ -168,6 +168,9 @@ class UniversalBot(commands.AutoShardedBot):
         # self.redis.close()
         await super().close()
 
+    async def on_shard_ready(self, shard_id):
+        print(f"Shard {shard_id} Connected.")
+
     async def on_ready(self):
         if not hasattr(self, "uptime"):
             self.uptime = datetime.utcnow()
@@ -180,9 +183,6 @@ class UniversalBot(commands.AutoShardedBot):
             status=discord.Status.online,
             activity=discord.Game(f"{prefixes[0]}help | {self.shard_count} Shards")
         )
-
-    async def on_shard_ready(self, shard_id):
-        print(f"Shard {shard_id} Connected.")
 
     def bot_uptime(self, *, brief=False):
         now = datetime.utcnow()
